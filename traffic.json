@@ -1,0 +1,121 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "webAppNamePrefix": {
+            "defaultValue": "kloudwebapp",
+            "minLength": 1,
+            "type": "String"
+        },
+        "farmSkuName": {
+            "defaultValue": "S1",
+            "allowedValues": [
+                "F1",
+                "D1",
+                "B1",
+                "B2",
+                "B3",
+                "S1",
+                "S2",
+                "S3",
+                "P1",
+                "P2",
+                "P3",
+                "P4"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "Describes plan's pricing tier and capacity. Check details at https://azure.microsoft.com/en-us/pricing/details/app-service/"
+            }
+        },
+        "webAppLocations": {
+            "defaultValue": [
+                "Australia east",
+                "Southeast Asia"
+            ],
+            "type": "Array"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('webAppNamePrefix'),'-',copyIndex())]",
+            "location": "[parameters('webAppLocations')[copyIndex()]]",
+            "dependsOn": [],
+            "tags": {},
+            "sku": {
+                "name": "[parameters('farmSkuName')]"
+            },
+            "properties": {
+                "name": "[concat(parameters('webAppNamePrefix'),'-',copyIndex())]",
+                "numberOfWorkers": 1
+            },
+            "copy": {
+                "name": "farmCopy",
+                "count": "[length(parameters('webAppLocations'))]"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2015-08-01",
+            "name": "[concat(parameters('webAppNamePrefix'),'-site-',copyIndex())]",
+            "location": "[parameters('webAppLocations')[copyIndex()]]",
+            "dependsOn": [
+                "farmCopy"
+            ],
+            "tags": {},
+            "kind": "functionapp",
+            "properties": {
+                "name": "[concat(parameters('webAppNamePrefix'),'-site-',copyIndex())]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', concat(parameters('webAppNamePrefix'),'-',copyIndex()))]"
+            },
+            "copy": {
+                "name": "siteCopy",
+                "count": "[length(parameters('webAppLocations'))]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/trafficManagerProfiles",
+            "apiVersion": "2015-11-01",
+            "name": "[concat(parameters('webAppNamePrefix'),'-tm-',uniqueString(resourceGroup().id))]",
+            "location": "global",
+            "dependsOn": [
+                "siteCopy"
+            ],
+            "properties": {
+                "profileStatus": "Enabled",
+                "trafficRoutingMethod": "Performance",
+                "dnsConfig": {
+                    "relativeName": "[concat(parameters('webAppNamePrefix'),'-tm-',uniqueString(resourceGroup().id))]",
+                    "ttl": 30
+                },
+                "monitorConfig": {
+                    "protocol": "HTTP",
+                    "port": 80,
+                    "path": "/"
+                },
+                "endpoints": [
+                    {
+                        "name": "[concat(parameters('webAppNamePrefix'),'-endpoint-','0')]",
+                        "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
+                        "properties": {
+                            "targetResourceId": "[resourceId('Microsoft.Web/sites/',concat(parameters('webAppNamePrefix'),'-site-','0'))]",
+                            "endpointStatus": "Enabled"
+                        }
+                    },
+                    {
+                        "name": "[concat(parameters('webAppNamePrefix'),'-endpoint-','1')]",
+                        "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
+                        "properties": {
+                            "targetResourceId": "[resourceId('Microsoft.Web/sites/',concat(parameters('webAppNamePrefix'),'-site-','1'))]",
+                            "endpointStatus": "Enabled"
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "outputs": {}
+}
