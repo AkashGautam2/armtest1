@@ -71,26 +71,13 @@
         "metadata": {
           "description": "Your loginCredentials/em for connecting Stream Analytics to PowerBI."
         }
-    },
-    "PowerBIDataset": {
-        "type": "string",
-        "minLength": 4,
-        "metadata": {
-          "description": "Your PowerBI dataset Name."
-        }
-    },
-    "PowerBITable": {
-        "type": "string",
-        "minLength": 4,
-        "metadata": {
-          "description": "Your PowerBI table Name."
-        }
-      }
+    }
     },
     "variables": {
       "IoTHubName": "[concat(parameters('FacilityName'), '-IoTHub-', uniqueString(resourceGroup().id))]",
-      "StreamAnalyticsJobName": "[concat(parameters('FacilityName'), '-StreamAnalyticsJob-', uniqueString(resourceGroup().id))]"
-      
+      "StreamAnalyticsJobName": "[concat(parameters('FacilityName'), '-StreamAnalyticsJob-', uniqueString(resourceGroup().id))]",
+      "PowerBIDataset": "[concat(parameters('FacilityName'), 'Dataset')]",
+      "PowerBITable": "[concat(parameters('FacilityName'), 'Table')]"
     },
     "resources": [
       {
@@ -269,8 +256,8 @@
                       "refreshToken": "dummytoken",
                       "tokenUserPrincipalName": "[parameters('PowerBIUserLoginName')]",
                       "tokenUserDisplayName": "[parameters('PowerBIUserDisplayName')]",
-                      "dataset": "[parameters('PowerBIDataset')]",
-                      "table": "[parameters('PowerBITable')]",
+                      "dataset": "[variables('PowerBIDataset')]",
+                      "table": "[variables('PowerBITable')]",
                       "groupId": "",
                       "groupName": "My Workspace",
                       "authenticationMode": "UserToken"
