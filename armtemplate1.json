@@ -69,7 +69,7 @@
         "type": "string",
         "minLength": 3,
         "metadata": {
-          "description": "Your loginCredentials/em for connecting Stream Analytics to PowerBI."
+          "description": "Your Login Credentials/Email ID for connecting Stream Analytics to PowerBI."
         }
     }
     },
